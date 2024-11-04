@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Client Management</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <script src="/js/script.js" defer></script>
+</head>
+<body>
+    <h1>Welcome to the Client Management Application</h1>
+    
+    <!-- Buttons to create new client or contact -->
+    <div class="action-buttons">
+        <button onclick="toggleClientForm()">Create Client</button>
+        <button onclick="toggleContactForm()">Create Contact</button>
+    </div>
+
+    <!-- Tab Navigation -->
+    <div class="tab-navigation">
+        <button class="tab-link active" onclick="openTab(event, 'clients')">Clients</button>
+        <button class="tab-link" onclick="openTab(event, 'contacts')">Contacts</button>
+    </div>
+
+    <!-- Client Tab Content -->
+    <div id="clients" class="tab-content">
+        <h2>Clients</h2>
+        <p><a href="/clients">View Clients</a></p>
+    </div>
+
+    <!-- Contact Tab Content -->
+    <div id="contacts" class="tab-content" style="display: none;">
+        <h2>Contacts</h2>
+        <p><a href="/contacts">View Contacts</a></p>
+    </div>
+
+    <!-- Modals for creating a client or contact -->
+    <div id="clientFormModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="close-button" onclick="toggleClientForm()">&times;</span>
+            <h2>Create New Client</h2>
+            <!-- <form action="/clients" method="POST"> -->
+            <form id="clientForm">
+                <label for="client-name">Name:</label>
+                <input type="text" id="client-name" name="name" placeholder="Client Name" required>
+                <button type="submit">Save Client</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="contactFormModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="close-button" onclick="toggleContactForm()">&times;</span>
+            <h2>Create New Contact</h2>
+            <form id="contactForm">
+                <label for="contact-name">Name:</label>
+                <input type="text" id="contact-name" name="name" placeholder="Contact Name" required>
+                <label for="contact-surname">Surname:</label>
+                <input type="text" id="contact-surname" name="surname" placeholder="Contact Surname" required>
+                <label for="contact-email">Email:</label>
+                <input type="email" id="contact-email" name="email" placeholder="Email" required>
+                <button type="submit">Save Contact</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+
+        function toggleContactForm() {
+                    const contactModal = document.getElementById('contactFormModal');
+                    contactModal.style.display = (contactModal.style.display === 'none' || contactModal.style.display === '') ? 'block' : 'none';
+                }
+
+        function toggleClientForm() {
+            const clientModal = document.getElementById('clientFormModal');
+            clientModal.style.display = (clientModal.style.display === 'none' || clientModal.style.display === '') ? 'block' : 'none';
+        }
+
+        function openTab(event, tabName) {
+            const tabContents = document.querySelectorAll('.tab-content');
+            tabContents.forEach(content => content.style.display = 'none');
+            document.getElementById(tabName).style.display = 'block';
+
+            const tabLinks = document.querySelectorAll('.tab-link');
+            tabLinks.forEach(link => link.classList.remove('active'));
+            event.currentTarget.classList.add('active');
+        }
+// Handle client form submit
+ document.addEventListener('DOMContentLoaded', function () {
+    // Handle client form submission with AJAX
+    document.getElementById('clientForm').addEventListener('submit', function(event) {
+        event.preventDefault(); // Prevent the default form submission
+        toggleClientForm();
+        const formData = new FormData(this); // Create FormData from the form
+        for (const [key, value] of formData.entries()) {
+            console.log(`${key}: ${value}`); // Log each entry
+        }
+
+        fetch('/clients', {
+            method: 'POST',
+            body: formData // Send the FormData
+        })
+        .then(response => response.json()) // Parse the JSON response
+        .then(data => {
+            if (data.success) {
+                console.log('Client saved successfully:', data.contact);
+
+            } else {
+                alert("Error saving client. Please try again."); // Show error message
+            }
+          
+        })
+        .catch(error => console.error('Error:', error));
+        this.reset();
+    });
+    
+    // Handle contact form submission with AJAX
+    document.getElementById('contactForm').addEventListener('submit', function(event) {
+        event.preventDefault(); // Prevent the default form submission
+        toggleContactForm();
+
+        const formData = new FormData(this); // Create FormData from the form
+        for (const [key, value] of formData.entries()) {
+            console.log(`${key}: ${value}`); // Log each entry
+        }
+
+        fetch('/contacts', {
+            method: 'POST',
+            body: formData // Send the FormData
+        })
+        .then(response => response.json()) // Parse the JSON response
+        .then(data => {
+            if (data.success) {
+                console.log('Contact saved successfully:', data.contact); // Log success message
+
+            } else {
+                alert("Error saving contact. Please try again."); // Show error message
+            }
+        })
+        .catch(error => console.error('Error:', error)); // Log any errors
+        this.reset();
+    });
+});
+
+    </script>
+</body>
+</html>
