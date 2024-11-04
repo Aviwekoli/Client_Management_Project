@@ -83,3 +83,29 @@ function generateClientCode(clientName, existingCodes) {
 
     return alphaPart + numericPart; // Return the complete client code
 }
+
+// Fetch list of all contacts to show in modal
+exports.getContacts = (req, res) => {
+    db.query('SELECT id, name, surname FROM contacts ORDER BY name ASC', (err, contacts) => {
+        if (err) throw err;
+        res.json(contacts);
+    });
+};
+
+
+exports.linkContacts = (req, res) => {
+    const { clientId, contactIds } = req.body;
+    console.log('Received request:', req.body);
+
+    // Check for missing data
+    if (!clientId || !Array.isArray(contactIds) || contactIds.length === 0) {
+        return res.status(400).json({ error: 'clientId and contactIds are required and contactIds must be a non-empty array.' });
+    }
+
+    const values = contactIds.map(contactId => [clientId, contactId]);
+
+    db.query('INSERT IGNORE INTO client_contact_link (client_id, contact_id) VALUES ?', [values], (err) => {
+        if (err) return res.status(500).json({ error: 'Database error', details: err.message });
+        res.sendStatus(200);
+    });
+};

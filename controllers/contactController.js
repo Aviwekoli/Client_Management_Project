@@ -19,3 +19,15 @@ exports.create = (req, res) => {
         res.redirect('/contacts');
     });
 };
+
+exports.listJSON = (req, res) => {
+    db.query(
+        'SELECT c.id, c.name, c.surname, c.email, COUNT(l.client_id) AS linked_clients FROM contacts c LEFT JOIN client_contact_link l ON c.id = l.contact_id GROUP BY c.id ORDER BY CONCAT(c.surname, " ", c.name) ASC',
+        (err, results) => {
+            if (err) {
+                return res.status(500).json({ error: 'Database query failed' });
+            }
+            res.json(results); // Send the results as JSON
+        }
+    );
+};
