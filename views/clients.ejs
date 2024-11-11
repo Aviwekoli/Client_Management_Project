@@ -58,10 +58,10 @@
             </thead>
             <tbody>
                 <% clients.forEach(client => { %>
-                    <tr>
+                    <tr data-client-id="<%= client.id %>"></tr>
                         <td><%= client.name %></td>
                         <td><%= client.client_code %></td>
-                        <td style="text-align: center;"><%= client.linked_accounts %></td>
+                        <td style="text-align: center;" data-column="linked_accounts"><%= client.linked_accounts %></td>
                         <td style="text-align: center;">
                             <button onclick="openLinkContactModal(<%= client.id %>)">Link Contact</button>
                         </td>
@@ -100,7 +100,7 @@
                 <button id="prevPageBtn" onclick="loadContacts(currentPage - 1)" disabled>Previous</button>
                 <button id="nextPageBtn" onclick="loadContacts(currentPage + 1)">Next</button>
             </div>
-            <button onclick="linkSelectedContacts()">Link Selected Contacts</button>
+            <button onclick="linkSelectedContacts(selectedClientId)">Link Selected Contacts</button>
         </div>
     </div>
 
@@ -125,19 +125,51 @@
             console.log("Opening modal for client ID:", clientId); 
             selectedClientId = clientId;
             openModal('linkContactModal');
-            loadContacts();
+            loadContacts(clientId);
         }
-
+        function updateLinkedAccountsCount(clientId, linkedAccount) {
+            const row = document.querySelector(`tr[data-client-id="${clientId}"]`);
+            if (row) {
+                const linkedAccountsCell = row.querySelector('td[data-column="linked_accounts"]');
+                //const currentCount = parseInt(linkedAccountsCell.textContent, 10) || 0;
+                //linkedAccountsCell.textContent = currentCount + countChange;
+                linkedAccountsCell.textContent = linkedCount;
+            }
+        }
         // Fetch contacts and populate the contactsList in the Link Contact modal
-        function loadContacts(page = 0) {
+        function loadContacts(clientId, page = 0) {
             console.log("Loading contacts... Page:", page);
             fetch('/contacts/json')
                 .then(response => response.json())
                 .then(data => {
-                    contacts = data; // Store contacts
+                    contacts = data;
+                    fetchLinkedContacts(clientId);
                     updateContactList(page);
                 })
                 .catch(error => console.error('Error loading contacts:', error));
+        }
+
+        // Fetch the already linked contacts for the selected client
+        function fetchLinkedContacts(clientId) {
+            fetch(`/clients/${clientId}/linkedContacts`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Error fetching linked contacts');
+                    }
+                    return response.json();
+                })
+                .then(linkedContacts => {
+                    const checkboxes = document.querySelectorAll('.contact-checkbox');
+                    checkboxes.forEach(checkbox => {
+                        const contactId = parseInt(checkbox.value, 10);
+                        if (linkedContacts.some(contact => contact.id === contactId)) {
+                            checkbox.checked = true;  // Mark checkboxes for linked contacts
+                        } else {
+                            checkbox.checked = false; // Unmark checkboxes for unlinked contacts
+                        }
+                    });
+                })
+                .catch(error => console.error('Error fetching linked contacts:', error));
         }
 
         // Update the contacts list based on the current page
@@ -161,21 +193,47 @@
         }
 
         // Link selected contacts to the client and close the modal
-        function linkSelectedContacts() {
-            const selectedContacts = Array.from(document.querySelectorAll('.contact-checkbox:checked'))
+        function linkSelectedContacts(clientId) {
+            console.log("Function called with clientId:", clientId);
+            alert(`Linking contacts for client ID: ${clientId}`);
+            const selectedContactIds = Array.from(document.querySelectorAll('.contact-checkbox:checked'))
                                           .map(checkbox => checkbox.value);
-            console.log('Client ID:', selectedClientId);
-            console.log('Selected Contacts:', selectedContacts);
+
+            const contactIndexes = selectedContactIds.map(id => parseInt(id, 10));
+
+            const selectedContacts = contacts.filter(contact => contactIndexes.includes(contact.id))
+            const allContactIds = contacts.map(contact => contact.id);
+
+            // Find contacts that were unchecked and should be delinked
+            const delinkedContactIds = allContactIds.filter(contactId => 
+                !selectedContactIds.includes(contactId.toString()) // Check if contact is unchecked
+            );
+
             fetch('/clients/linkContacts', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ clientId: selectedClientId, contactIds: selectedContacts })
+                body: JSON.stringify({ clientId: selectedClientId, linkIds: contactIndexes, unlinkIds: delinkedContactIds })
             }).then(response => {
                 if (response.ok) {
                     closeModal('linkContactModal');
-                    location.reload();  // Reload to show updated linked accounts count
+                    updateLinkedAccountsCount(selectedClientId, contactIndexes.length);
+                    updateClientLinkedContacts(selectedClientId, selectedContacts);
                 }
             }).catch(error => console.error('Error linking contacts:', error));
+        }
+
+        function updateClientLinkedContacts(clientId, newContacts) {
+            const row = document.querySelector(`tr[data-client-id="${clientId}"]`);
+            if (row) {
+                const linkedAccountsCell = row.querySelector('td[data-column="linked_accounts"]');
+                const existingContacts = linkedAccountsCell.textContent.trim();
+                
+                // Create a string of the newly linked contacts, for example: "John Doe, Jane Smith"
+                const newContactNames = newContacts.map(contact => contact.name + ' ' + contact.surname).join(', ');
+
+                // Append the new contact names to the existing ones
+                linkedAccountsCell.textContent = existingContacts + (existingContacts ? ', ' : '') + newContactNames;
+            }
         }
     </script>
 </body>

@@ -93,19 +93,56 @@ exports.getContacts = (req, res) => {
 };
 
 
+
 exports.linkContacts = (req, res) => {
-    const { clientId, contactIds } = req.body;
-    console.log('Received request:', req.body);
+    console.log("Received request:", req.body);
+
+    const { clientId, linkIds, unlinkIds } = req.body;
 
     // Check for missing data
-    if (!clientId || !Array.isArray(contactIds) || contactIds.length === 0) {
-        return res.status(400).json({ error: 'clientId and contactIds are required and contactIds must be a non-empty array.' });
+    // if (!clientId) {
+    //     return res.status(400).json({ error: 'clientId is required.' });
+    // }
+
+    // If there are contacts to be linked
+    if (Array.isArray(linkIds) && linkIds.length > 0) {
+        const linkValues = linkIds.map(contactId => [clientId, contactId]);
+
+        // Insert new contact links into the client_contact_link table (ignore duplicates)
+        db.query('INSERT IGNORE INTO client_contact_link (client_id, contact_id) VALUES ?', [linkValues], (err) => {
+            if (err) return res.status(500).json({ error: 'Error linking contacts', details: err.message });
+            console.log('Contacts linked successfully.');
+        });
     }
 
-    const values = contactIds.map(contactId => [clientId, contactId]);
+    // If there are contacts to be unlinked
+    if (Array.isArray(unlinkIds) && unlinkIds.length > 0) {
+        // Delete contacts that are unchecked from the client_contact_link table
+        const unlinkQuery = 'DELETE FROM client_contact_link WHERE client_id = ? AND contact_id IN (?)';
+        db.query(unlinkQuery, [clientId, unlinkIds], (err) => {
+            if (err) return res.status(500).json({ error: 'Error unlinking contacts', details: err.message });
+            console.log('Contacts unlinked successfully.');
+        });
+    }
 
-    db.query('INSERT IGNORE INTO client_contact_link (client_id, contact_id) VALUES ?', [values], (err) => {
-        if (err) return res.status(500).json({ error: 'Database error', details: err.message });
-        res.sendStatus(200);
-    });
+    res.sendStatus(200); // Send success response after both actions (linking and unlinking) are handled
+};
+
+// Fetch linked contacts for a client
+exports.getLinkedContacts = (req, res) => {
+    const clientId = req.params.clientId;
+
+    // Query to fetch linked contacts for the given client
+    db.query(
+        'SELECT c.id, c.name, c.surname FROM contacts c ' +
+        'JOIN client_contact_link l ON c.id = l.contact_id ' +
+        'WHERE l.client_id = ? ORDER BY c.name ASC',
+        [clientId],
+        (err, results) => {
+            if (err) {
+                return res.status(500).json({ error: 'Error fetching linked contacts', details: err.message });
+            }
+            res.json(results); // Return the linked contacts as JSON
+        }
+    );
 };

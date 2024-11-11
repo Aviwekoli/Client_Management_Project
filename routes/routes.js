@@ -61,6 +61,9 @@ router.post('/contacts', upload.none(), [
 // Link multiple contacts to a client
 router.post('/clients/linkContacts', upload.none(), ClientController.linkContacts);
 
+// Add this route to fetch linked contacts for a specific client
+router.get('/clients/:clientId/linkedContacts', ClientController.getLinkedContacts);
+
 router.get('/contacts/json', ContactController.listJSON);
 
 module.exports = router;
