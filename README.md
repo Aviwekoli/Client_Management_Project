@@ -7,8 +7,7 @@ The *Client Management Application is a simple application that can be used to a
 Aviwe Koli 
 
 ## :memo: Instructions 
-- To get started with the app, clone the repo to your local machine. Set up mySQL on your local, and then run the sql script on this repo to create your database.
-- Run node app.js to open the application on your browser
+- To get started with the app, follow the link-> https://client-management-project.onrender.com
 - On the home page, you have an option to add a contact or client, you can also navigate to the clients or contacts tab.
 - To view clients, navigate to the clients tab and click the 'clients" link there and it will take you to the clients tab, do the same for contacts.
 - Once on clients page, you will be able to view clients on the system from A to Z, with their unique client codes.
