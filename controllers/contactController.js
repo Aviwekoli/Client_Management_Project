@@ -47,6 +47,7 @@ exports.getLinkedClients = (req, res) => {
 
 // Link clients to a contact
 exports.linkClients = (req, res) => {
+    console.log(req.body)
     const { contactId, linkIds } = req.body;
     
     if (!contactId || !Array.isArray(linkIds)) {

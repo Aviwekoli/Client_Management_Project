@@ -6,7 +6,7 @@
     <title>Contact Management</title>
     <link rel="stylesheet" href="/css/style.css">
     <script src="/js/script.js" defer></script>
-        <style>
+    <style>
         /* Basic styles for the modal */
         .modal {
             display: none;
@@ -25,8 +25,8 @@
             border-radius: 5px;
             width: 500px;
             max-width: 100%;
-            max-height: 80%; /* Limit modal height */
-            overflow-y: auto; /* Allow scrolling if content overflows */
+            max-height: 80%;
+            overflow-y: auto;
             position: relative;
         }
         .close-button {
@@ -61,7 +61,7 @@
             </thead>
             <tbody>
                 <% contacts.forEach(contact => { %>
-                    <tr>
+                    <tr data-contact-id="<%= contact.id %>">
                         <td><%= contact.name %></td>
                         <td><%= contact.surname %></td>
                         <td><%= contact.email %></td>
@@ -79,49 +79,43 @@
         <p>No contact(s) found.</p>
     <% } %>
 
-        <!-- Modal for linking clients -->
-        <div id="linkClientModal" class="modal">
-            <div class="modal-content">
-                <span class="close-button" onclick="closeModal('linkClientModal')">&times;</span>
-                <h2>Link Clients to Contact</h2>
-                <div id="clientsList">
-                    <!-- Clients will be loaded here dynamically -->
-                </div>
-                <div class="pagination">
-                    <button id="prevPageBtn" onclick="loadClients(currentPage - 1)" disabled>Previous</button>
-                    <button id="nextPageBtn" onclick="loadClients(currentPage + 1)">Next</button>
-                </div>
-                <button onclick="linkSelectedClients(selectedContactId)">Link Selected Clients</button>
+    <!-- Modal for linking clients -->
+    <div id="linkClientModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" onclick="closeModal('linkClientModal')">&times;</span>
+            <h2>Link Clients to Contact</h2>
+            <div id="clientsList">
+                <!-- Clients will be loaded here dynamically -->
             </div>
+            <div class="pagination">
+                <button id="prevPageBtn" onclick="navigatePage(-1)" disabled>Previous</button>
+                <button id="nextPageBtn" onclick="navigatePage(1)">Next</button>
+            </div>
+            <button onclick="linkSelectedClients()">Link Selected Clients</button>
         </div>
+    </div>
 
     <script>
         let selectedContactId;
         let currentPage = 0; // Current page of clients
-        const clientsPerPage = 5; // Number of clients to show per page
-        let clients = []; // Store all clients loaded
+        const clientsPerPage = 5;
+        let clients = [];
 
-        // Open the contact creation modal
         function openModal(modalId) {
             document.getElementById(modalId).style.display = 'flex';
         }
 
-        // Close the specified modal
         function closeModal(modalId) {
             document.getElementById(modalId).style.display = 'none';
         }
 
-        // Open the Link Client modal for a specific contact and load clients
         function openLinkClientModal(contactId) {
-            console.log("Opening modal for contact ID:", contactId); 
             selectedContactId = contactId;
             openModal('linkClientModal');
             loadClients(contactId);
         }
 
-        // Fetch clients and populate the clientsList in the Link Client modal
         function loadClients(contactId, page = 0) {
-            console.log("Loading clients... Page:", page);
             fetch('/clients/json')
                 .then(response => response.json())
                 .then(data => {
@@ -132,30 +126,19 @@
                 .catch(error => console.error('Error loading clients:', error));
         }
 
-        // Fetch the already linked clients for the selected contact
         function fetchLinkedClients(contactId) {
             fetch(`/contacts/${contactId}/linkedClients`)
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error('Error fetching linked clients');
-                    }
-                    return response.json();
-                })
+                .then(response => response.json())
                 .then(linkedClients => {
                     const checkboxes = document.querySelectorAll('.client-checkbox');
                     checkboxes.forEach(checkbox => {
                         const clientId = parseInt(checkbox.value, 10);
-                        if (linkedClients.some(client => client.id === clientId)) {
-                            checkbox.checked = true;  // Mark checkboxes for linked clients
-                        } else {
-                            checkbox.checked = false; // Unmark checkboxes for unlinked clients
-                        }
+                        checkbox.checked = linkedClients.some(client => client.id === clientId);
                     });
                 })
                 .catch(error => console.error('Error fetching linked clients:', error));
         }
 
-        // Update the clients list based on the current page
         function updateClientList(page) {
             const clientsList = document.getElementById('clientsList');
             const start = page * clientsPerPage;
@@ -169,32 +152,40 @@
                 </div>
             `).join('');
 
-            // Update pagination buttons
-            document.getElementById('prevPageBtn').disabled = (page === 0);
-            document.getElementById('nextPageBtn').disabled = (end >= clients.length);
-            currentPage = page; // Update current page
+            document.getElementById('prevPageBtn').disabled = page === 0;
+            document.getElementById('nextPageBtn').disabled = end >= clients.length;
+            currentPage = page;
         }
 
-        // Link selected clients to the contact and close the modal
-        function linkSelectedClients(contactId) {
+        function linkSelectedClients() {
             const selectedClientIds = Array.from(document.querySelectorAll('.client-checkbox:checked'))
-                                          .map(checkbox => checkbox.value);
+                .map(checkbox => checkbox.value);
 
             const clientIndexes = selectedClientIds.map(id => parseInt(id, 10));
+            console.log("client ids", selectedClientIds);
+            console.log("contact ids", clientIndexes)
 
             fetch('/contacts/linkClients', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ contactId: selectedContactId, linkIds: clientIndexes })
-            }).then(response => {
+            })
+            .then(response => {
                 if (response.ok) {
                     closeModal('linkClientModal');
                     updateLinkedClientsCount(selectedContactId, clientIndexes.length);
                 }
-            }).catch(error => console.error('Error linking clients:', error));
+            })
+            .catch(error => console.error('Error linking clients:', error));
         }
 
-        // Update the "Linked Clients" count for the contact
+        function navigatePage(direction) {
+            const newPage = currentPage + direction;
+            if (newPage >= 0 && newPage * clientsPerPage < clients.length) {
+                updateClientList(newPage);
+            }
+        }
+
         function updateLinkedClientsCount(contactId, linkedCount) {
             const row = document.querySelector(`tr[data-contact-id="${contactId}"]`);
             if (row) {
@@ -205,3 +196,4 @@
     </script>
 </body>
 </html>
+

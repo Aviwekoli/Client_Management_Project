@@ -28,6 +28,9 @@ router.post('/contacts', upload.none(), [
 // Link multiple contacts to a client
 router.post('/clients/linkContacts', upload.none(), ClientController.linkContacts);
 
+// Route for linking clients
+router.post('/contacts/linkClients', upload.none(), ContactController.linkClients);
+
 // Fetch linked clients for a specific contact
 router.get('/contacts/:contactId/linkedClients', ContactController.getLinkedClients);
 

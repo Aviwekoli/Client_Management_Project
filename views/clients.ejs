@@ -58,7 +58,7 @@
             </thead>
             <tbody>
                 <% clients.forEach(client => { %>
-                    <tr data-client-id="<%= client.id %>"></tr>
+                    <tr data-client-id="<%= client.id %>">
                         <td><%= client.name %></td>
                         <td><%= client.client_code %></td>
                         <td style="text-align: center;" data-column="linked_accounts"><%= client.linked_accounts %></td>
@@ -97,8 +97,10 @@
                 <!-- Contacts will be loaded here dynamically -->
             </div>
             <div class="pagination">
-                <button id="prevPageBtn" onclick="loadContacts(currentPage - 1)" disabled>Previous</button>
-                <button id="nextPageBtn" onclick="loadContacts(currentPage + 1)">Next</button>
+                <!-- <button id="prevPageBtn" onclick="loadContacts(currentPage - 1)" disabled>Previous</button>
+                <button id="nextPageBtn" onclick="loadContacts(currentPage + 1)">Next</button> -->
+                <button id="prevPageBtn" onclick="navigatePage(-1)" disabled>Previous</button>
+                <button id="nextPageBtn" onclick="navigatePage(1)">Next</button>
             </div>
             <button onclick="linkSelectedContacts(selectedClientId)">Link Selected Contacts</button>
         </div>
@@ -119,13 +121,17 @@
         function closeModal(modalId) {
             document.getElementById(modalId).style.display = 'none';
         }
-
         // Open the Link Contact modal for a specific client and load contacts
         function openLinkContactModal(clientId) {
-            console.log("Opening modal for client ID:", clientId); 
             selectedClientId = clientId;
             openModal('linkContactModal');
-            loadContacts(clientId);
+
+            if (contacts.length === 0) { // Fetch contacts only once
+                loadContacts(clientId);
+            } else {
+                fetchLinkedContacts(clientId, currentPage); // Update linked contacts for the current client
+                updateContactList(currentPage); // Display contacts for the current page
+            }
         }
         function updateLinkedAccountsCount(clientId, linkedAccount) {
             const row = document.querySelector(`tr[data-client-id="${clientId}"]`);
@@ -133,7 +139,7 @@
                 const linkedAccountsCell = row.querySelector('td[data-column="linked_accounts"]');
                 //const currentCount = parseInt(linkedAccountsCell.textContent, 10) || 0;
                 //linkedAccountsCell.textContent = currentCount + countChange;
-                linkedAccountsCell.textContent = linkedCount;
+                linkedAccountsCell.textContent = contactIndexes.length;
             }
         }
         // Fetch contacts and populate the contactsList in the Link Contact modal
@@ -144,7 +150,7 @@
                 .then(data => {
                     contacts = data;
                     fetchLinkedContacts(clientId);
-                    updateContactList(page);
+                    updateContactList(0);
                 })
                 .catch(error => console.error('Error loading contacts:', error));
         }
@@ -192,6 +198,15 @@
             currentPage = page; // Update current page
         }
 
+        // Navigate to the previous or next page
+        function navigatePage(direction) {
+            const newPage = currentPage + direction;
+            if (newPage >= 0 && newPage * contactsPerPage < contacts.length) {
+                updateContactList(newPage);
+                fetchLinkedContacts(selectedClientId); // Fetch linked contacts for new page
+            }
+        }
+
         // Link selected contacts to the client and close the modal
         function linkSelectedContacts(clientId) {
             const selectedContactIds = Array.from(document.querySelectorAll('.contact-checkbox:checked'))
@@ -236,3 +251,4 @@
     </script>
 </body>
 </html>
+

@@ -49,7 +49,7 @@ h1 {
 }
 
 .action-buttons button {
-    background-color: #007bff;
+    background-color: #ff0037;
     color: #fff;
     border: none;
     padding: 10px 20px;
@@ -61,7 +61,7 @@ h1 {
 }
 
 .action-buttons button:hover {
-    background-color: #0056b3;
+    background-color: #794853;
 }
 
 /* Tab navigation */
@@ -77,7 +77,7 @@ h1 {
     text-align: center;
     padding: 10px 0;
     font-size: 18px;
-    color: #007bff;
+    color: #ff0037;
     background-color: #fff;
     border: none;
     cursor: pointer;
@@ -87,7 +87,7 @@ h1 {
 
 .tab-navigation .tab-link.active,
 .tab-navigation .tab-link:hover {
-    background-color: #007bff;
+    background-color: #ff0037;
     color: #fff;
 }
 
@@ -102,7 +102,7 @@ h1 {
 
 .tab-content h2 {
     margin-top: 0;
-    color: #007bff;
+    color: #ff0037;
 }
 
 .tab-content p {
@@ -135,7 +135,7 @@ h1 {
 
 .modal-content h2 {
     margin-top: 0;
-    color: #007bff;
+    color: #5f0808;
 }
 
 .modal-content label {
@@ -156,7 +156,7 @@ h1 {
     width: 100%;
     padding: 10px;
     margin: 5px;
-    background-color: #007bff;
+    background-color: #ff0037;
     color: #fff;
     border: none;
     cursor: pointer;
@@ -166,7 +166,7 @@ h1 {
 }
 
 .modal-content button:hover {
-    background-color: #0056b3;
+    background-color: #ff0037;
 }
 
 /* Close button */
