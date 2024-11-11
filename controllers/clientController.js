@@ -146,3 +146,16 @@ exports.getLinkedContacts = (req, res) => {
         }
     );
 };
+
+// Fetch list of clients as JSON
+exports.listJSON = (req, res) => {
+    db.query(
+        'SELECT c.id, c.name, c.client_code, COUNT(l.contact_id) AS linked_accounts FROM clients c LEFT JOIN client_contact_link l ON c.id = l.client_id GROUP BY c.id ORDER BY c.name ASC',
+        (err, results) => {
+            if (err) {
+                return res.status(500).json({ error: 'Error fetching clients', details: err.message });
+            }
+            res.json(results); // Send the results as JSON
+        }
+    );
+};
