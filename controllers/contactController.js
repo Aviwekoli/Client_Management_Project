@@ -1,6 +1,7 @@
 const db = require('../config/database');
 const { validationResult } = require('express-validator');
 
+// Get list of contacts from the database
 exports.list = (req, res) => {
     db.query(
         'SELECT c.id, c.name, c.surname, c.email, COUNT(l.client_id) AS linked_clients FROM contacts c LEFT JOIN client_contact_link l ON c.id = l.contact_id GROUP BY c.id ORDER BY CONCAT(c.surname, " ", c.name) ASC',
@@ -11,6 +12,7 @@ exports.list = (req, res) => {
     );
 };
 
+// Create contacts on the database
 exports.create = (req, res) => {
     console.log(req.body);
     const { name, surname, email } = req.body;
@@ -20,6 +22,7 @@ exports.create = (req, res) => {
     });
 };
 
+// JSON list of the contacts
 exports.listJSON = (req, res) => {
     db.query(
         'SELECT c.id, c.name, c.surname, c.email, COUNT(l.client_id) AS linked_clients FROM contacts c LEFT JOIN client_contact_link l ON c.id = l.contact_id GROUP BY c.id ORDER BY CONCAT(c.surname, " ", c.name) ASC',

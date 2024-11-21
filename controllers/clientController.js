@@ -2,6 +2,7 @@
 const db = require('../config/database');
 const { validationResult } = require('express-validator');
 
+// Get client list from the database
 exports.list = (req, res) => {
     console.log(req.body);
     db.query('SELECT c.id, c.name, c.client_code, COUNT(l.contact_id) AS linked_accounts FROM clients c LEFT JOIN client_contact_link l ON c.id = l.client_id GROUP BY c.id ORDER BY c.name ASC', (err, results) => {
@@ -10,6 +11,7 @@ exports.list = (req, res) => {
     });
 };
 
+// Create list of clients on the database
 exports.create = (req, res) => {
     const { name } = req.body;
     const clientCode = generateClientCode(name);
@@ -40,7 +42,8 @@ exports.create = (req, res) => {
     });
 };
 
-function generateClientCode(clientName, existingCodes) {
+// Function to generate Client Code 
+const generateClientCode = (clientName, existingCodes) => {
     // Normalize the client name
     const normalizedName = clientName.trim().toUpperCase();
     
@@ -92,17 +95,11 @@ exports.getContacts = (req, res) => {
     });
 };
 
-
-
+// Function to link contacts to clients
 exports.linkContacts = (req, res) => {
     console.log("Received request:", req.body);
 
     const { clientId, linkIds, unlinkIds } = req.body;
-
-    // Check for missing data
-    // if (!clientId) {
-    //     return res.status(400).json({ error: 'clientId is required.' });
-    // }
 
     // If there are contacts to be linked
     if (Array.isArray(linkIds) && linkIds.length > 0) {
